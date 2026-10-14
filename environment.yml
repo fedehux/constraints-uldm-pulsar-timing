@@ -1,0 +1,17 @@
+# Environment of the analysis.  Levels 1-2 of the README (limits, figures,
+# aggregation) need only numpy, scipy and matplotlib; level 3 (the chains)
+# needs the full list.
+name: uldm-pulsar-timing
+channels:
+  - conda-forge
+dependencies:
+  - python=3.10
+  - numpy=2.2.6
+  - scipy=1.15.2
+  - matplotlib=3.10.9
+  - astropy=6.1.7
+  - pint-pulsar=1.1.4
+  - enterprise-pulsar=3.4.4
+  - ptmcmcsampler=2.1.4
+  - scikit-sparse=0.4.16
+  - loguru=0.7.3

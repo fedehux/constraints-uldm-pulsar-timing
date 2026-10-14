@@ -1,0 +1,6 @@
+[agregar_cotas] beta version=final-2026-10-06  prior [-92.000, -60.000]  6400 bins  SUAVIZADO=0.03 TAIL=0.05 ANCLA=0.7 COLA=potencias EXPONENTE=-1.0
+  masas 500; completas (50 pulsares): 500; incompletas: 0
+  margen minimo de la cota al techo del prior: 6.39 dex (m = 1.000e-18)
+  ESS minimo 9; mediana de ESS minimos por masa 745
+  cadenas con >50% de muestras a menos de 0.5 dex del techo: 1 (son pulsares sin sensibilidad a esa masa; su ln Z_i es una meseta)
+  guardado /home/fe.huxhagen/version_final/out_beta_cotas/COTAS_beta.npz

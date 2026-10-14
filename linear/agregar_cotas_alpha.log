@@ -1,0 +1,6 @@
+[agregar_cotas] alpha version=final-2026-10-06  prior [-50.182, -34.182]  3200 bins  SUAVIZADO=0.03 TAIL=0.05 ANCLA=0.7 COLA=potencias EXPONENTE=-2.0
+  masas 407; completas (50 pulsares): 407; incompletas: 0
+  margen minimo de la cota al techo del prior: 2.46 dex (m = 9.427e-19)
+  ESS minimo 329; mediana de ESS minimos por masa 1332
+  cadenas con >50% de muestras a menos de 0.5 dex del techo: 46 (son pulsares sin sensibilidad a esa masa; su ln Z_i es una meseta)
+  guardado /home/fe.huxhagen/version_final/out_alpha_cotas/COTAS_alpha.npz

@@ -1,0 +1,21 @@
+cff-version: 1.2.0
+message: "If you use this code or these results, please cite the accompanying paper."
+title: "constraints-uldm-pulsar-timing"
+type: software
+license: MIT
+repository-code: "https://github.com/fedehux/constraints-uldm-pulsar-timing"
+authors:
+  - family-names: Huxhagen
+    given-names: Federico
+  - family-names: "López Nacir"
+    given-names: Diana
+preferred-citation:
+  type: article
+  title: "Constraints on ultralight dark matter couplings from orbital perturbations of binary pulsars"
+  authors:
+    - family-names: Huxhagen
+      given-names: Federico
+    - family-names: "López Nacir"
+      given-names: Diana
+  year: 2026
+  notes: "Citation details to be added upon publication."
