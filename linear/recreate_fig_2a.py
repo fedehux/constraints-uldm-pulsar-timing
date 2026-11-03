@@ -1,4 +1,4 @@
-"""Recreate Fig. 1 of the paper: 95% credible upper limit on the linear
+"""Recreate Fig. 2(a) of the paper: 95% credible upper limit on the linear
 scalar coupling alpha as a function of the ULDM mass.
 
 The limit is read from ``COTAS_alpha.npz`` (written by
@@ -70,7 +70,7 @@ def configure_ticks(ax):
     ax.xaxis.set_minor_formatter(mticker.NullFormatter())
     ax.yaxis.set_minor_formatter(mticker.NullFormatter())
     ax.tick_params(which="both", direction="in", top=True, right=True)
-    ax.tick_params(axis="both", which="major", length=4, width=0.7, labelsize=8)
+    ax.tick_params(axis="both", which="major", length=4, width=0.7, labelsize=9)
     ax.tick_params(axis="both", which="minor", length=2, width=0.5)
 
 
@@ -92,8 +92,9 @@ def main():
     ax.set_yscale("log")
     ax.set_xlim(1e-23, 1e-18)
     ax.set_ylim(1e-27, 1e-12)
-    ax.set_xlabel(r"$m$ [eV]", fontsize=10)
-    ax.set_ylabel(r"$\alpha$ [GeV$^{-1}$]", fontsize=10, labelpad=2)
+    ax.set_xlabel(r"$m$ [eV]", fontsize=11)
+    ax.set_ylabel(r"$\alpha$ [GeV$^{-1}$]", fontsize=11, labelpad=2)
+    ax.set_title("(a)", fontsize=11)   # panel (a) of Fig. 2
     top = ax.get_ylim()[1]
 
     # Regions above each curve are excluded.
@@ -114,15 +115,15 @@ def main():
     ax.plot(m_uncorr, a_uncorr, color=C_PTA_UNCORRELATED, lw=1.0, zorder=3)
 
     ax.fill_between(masses, alpha, top, color="grey", alpha=0.25, zorder=4)
-    ax.plot(masses, alpha, color=C_OURS, lw=1.0, zorder=10)
+    ax.plot(masses, alpha, color=C_OURS, lw=0.8, zorder=10)
 
-    ax.text(9e-20, 2.3e-21, "Cassini test of GR", color=C_CASSINI_GR,
-            fontsize=6, ha="right", va="bottom", weight="bold")
-    ax.text(9.0e-20, 2e-22, "Cassini stochastic",
-            color=C_CASSINI_STOCHASTIC, fontsize=6, ha="right", va="bottom",
+    ax.text(2.3e-19, 2.3e-21, "Cassini test of GR", color=C_CASSINI_GR,
+            fontsize=7.5, ha="right", va="bottom", weight="bold")
+    ax.text(2.1e-19, 2.3e-22, "Cassini stochastic",
+            color=C_CASSINI_STOCHASTIC, fontsize=7.5, ha="right", va="bottom",
             weight="bold")
-    ax.text(1.3e-23, 2.0e-25, "PTA", color=C_PTA_CORRELATED,
-            fontsize=7, ha="left", va="bottom", weight="bold")
+    ax.text(2e-23, 2.0e-25, "PTA", color=C_PTA_CORRELATED,
+            fontsize=8.5, ha="left", va="bottom", weight="bold")
     # ax.text(1.3e-23, 4.0e-27, "PTA (uncorr.)", color=C_PTA_UNCORRELATED,
     #         fontsize=5.5, ha="left", va="bottom", weight="bold")
 

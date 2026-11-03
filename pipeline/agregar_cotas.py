@@ -19,6 +19,12 @@
 # Combinacion:  ln p(x) = x ln10 + sum_i ln Z_i(x);  cota = cuantil 95%.
 # Perillas (entorno): SUAVIZADO (0.03), TAIL_FRAC (0.05), ANCLA (0.7),
 #   COLA (potencias | gaussiana | corte), EXPONENTE (por defecto segun acople).
+# Opcionales: REEMPLAZOS = carpetas (separadas por comas) con histogramas que
+#   reemplazan a los de OUT_ROOT/hist con el mismo nombre; si un archivo esta en
+#   varias, gana la ultima (p. ej. Pbdot libre y despues prior gaussiano);
+#   COTAS_SALIDA = ruta del .npz de salida (por defecto OUT_ROOT/COTAS_<acople>.npz);
+#   EXTRAS = carpetas (separadas por comas) con histogramas de masas que no estan
+#   en OUT_ROOT/hist, que se suman a los de produccion antes de los reemplazos.
 #
 # Controles que imprime: masas incompletas, cadenas con muestras pegadas al
 # techo/piso, ESS minimo, margen de la cota al techo del prior.
@@ -41,6 +47,9 @@ ANCLA = float(os.environ.get("ANCLA", "0.7"))
 COLA = os.environ.get("COLA", "potencias")
 EXPO = float(os.environ.get("EXPONENTE", "-1.0" if ACOPLE == "beta" else "-2.0"))
 N_ESP = int(os.environ.get("N_PSR_EXPECTED", "50"))
+REEMPLAZOS = os.environ.get("REEMPLAZOS", "")
+COTAS_SALIDA = os.environ.get("COTAS_SALIDA", "")
+EXTRAS = os.environ.get("EXTRAS", "")
 LN10 = np.log(10.0)
 ESCALA_FIS = {"alpha": lambda x: x + np.log10(np.sqrt(2.30817405213802e+48)),
               "beta": lambda x: 0.5 * (x + np.log10(2.30817405213802e+48)),   # log10 sqrt(beta) [GeV^-1]
@@ -58,7 +67,7 @@ def lnZ_de_counts(c, centros, dx):
     i0, i1 = idx[0], idx[-1]
     lnZ[i0:i1 + 1] = np.log(np.maximum(dens[i0:i1 + 1], TAIL * dens.max())) - centros[i0:i1 + 1] * LN10
     na = max(3, int(round(ANCLA / dx)))
-    lnZ[:i0] = np.median(lnZ[i0:i0 + na])
+    lnZ[:i0] = np.median(lnZ[i0:min(i0 + na, i1 + 1)])   # only measured bins: a chain spanning < ANCLA dex would otherwise pull in the still -inf tail
     if i1 + 1 < len(centros) and COLA != "corte":
         j0 = max(i0, i1 - na + 1)
         xh = centros[i1]
@@ -89,6 +98,25 @@ def main():
     fs = sorted(glob.glob(os.path.join(OUT_ROOT, "hist", "m_*__*__s0.npz")))
     if not fs:
         raise SystemExit("no hay histogramas")
+    if EXTRAS:
+        ya = {os.path.basename(f) for f in fs}
+        extra = [f for c in EXTRAS.split(",") if c.strip()
+                 for f in sorted(glob.glob(os.path.join(c.strip(), "m_*__*__s0.npz")))]
+        repetidos = [f for f in extra if os.path.basename(f) in ya]
+        if repetidos:
+            raise SystemExit(f"EXTRAS: {len(repetidos)} archivos ya estan en OUT_ROOT, p. ej. {repetidos[0]}")
+        fs = fs + extra
+        print(f"[agregar_cotas] {len(extra)} histogramas agregados desde {EXTRAS}")
+    if REEMPLAZOS:
+        nuevos = {}
+        for carpeta in [c for c in REEMPLAZOS.split(",") if c.strip()]:
+            nuevos.update({os.path.basename(f): f
+                           for f in glob.glob(os.path.join(carpeta.strip(), "m_*__*__s0.npz"))})
+        sin_par = sorted(set(nuevos) - {os.path.basename(f) for f in fs})
+        if sin_par:
+            raise SystemExit(f"REEMPLAZOS: {len(sin_par)} archivos sin par en OUT_ROOT, p. ej. {sin_par[0]}")
+        fs = [nuevos.get(os.path.basename(f), f) for f in fs]
+        print(f"[agregar_cotas] {len(nuevos)} histogramas reemplazados desde {REEMPLAZOS}")
     por = defaultdict(dict); meta = {}
     avisos = defaultdict(list)
     for f in fs:
@@ -124,7 +152,7 @@ def main():
     na = sum(len(v) for v in avisos.values())
     print(f"  cadenas con >50% de muestras a menos de 0.5 dex del techo: {na} "
           f"(son pulsares sin sensibilidad a esa masa; su ln Z_i es una meseta)")
-    out = os.path.join(OUT_ROOT, f"COTAS_{ACOPLE}.npz")
+    out = COTAS_SALIDA or os.path.join(OUT_ROOT, f"COTAS_{ACOPLE}.npz")
     np.savez(out, masses_eV=m, log10_ul_codigo=ul, ul_fisico_log10=ESCALA_FIS(ul), n_pulsares=npsr,
              ess_min=ess_min, margen_techo=margen, prior=(lo, hi), suavizado=SUAV, tail=TAIL,
              ancla=ANCLA, cola=COLA, exponente=EXPO, version=meta["version"])

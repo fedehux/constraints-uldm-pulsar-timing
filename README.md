@@ -2,15 +2,15 @@
 
 This repository contains the code and the data products of *Constraints on
 ultralight dark matter couplings from orbital perturbations of binary pulsars*
-(F. Huxhagen and D. López Nacir). We search the wideband data of the 50 binary
-pulsars of the NANOGrav 15-year data set for the orbital signature of
-ultralight dark matter (ULDM) between 10<sup>-23</sup> and 10<sup>-18</sup> eV,
-and set 95% credible upper limits on three couplings: a linear (alpha) and a
-quadratic (beta) universal coupling of a scalar field, and a vector field
-coupled to B−L (g).
+(F. Huxhagen and D. López Nacir, in preparation). Using the wideband data of
+the 50 binary pulsars of the NANOGrav 15-year data set, we set 95% credible
+upper limits on three couplings of ultralight dark matter (ULDM) between
+10<sup>-23</sup> and 10<sup>-18</sup> eV, through the perturbations the field
+induces in the binary orbits: a linear (alpha) and a quadratic (beta) universal
+coupling of a scalar field, and a vector field coupled to B−L (g).
 
-Everything needed to go from the NANOGrav data to the figures of the paper is
-here: the production pipeline, the single-pulsar histograms it produced, the
+The repository goes from the NANOGrav data to the limits and figures of the
+paper: the production pipeline, the single-pulsar histograms it produced, the
 combined upper limits, the external bounds and the plotting scripts. You can
 enter at any of three levels:
 
@@ -23,17 +23,17 @@ enter at any of three levels:
 
 ```
 pipeline/                 production code of the final runs (unchanged, with MD5SUMS)
-linear/                   alpha: Fig. 1
-quadratic/                beta:  Fig. 2
+linear/                   alpha: Fig. 2(a)
+quadratic/                beta:  Fig. 2(b)
 vector/                   g:     Fig. 3
     histograms/           single-pulsar histograms of the upper-limit runs (packed)
     COTAS_<coupling>.npz  combined 95% upper limit, as used in the paper
+    agregar_cotas_<coupling>.log   output of the aggregation that wrote it
     <name>_95UL.txt       the same limit as a plain-text table
     other_constraints/    external bounds drawn in the figure
-    recreate_fig_N.py     plotting script of the figure
+    recreate_fig_*.py     plotting script of the figure
     constraints_on_*.pdf  the figure
-bayes_factors/            Bayes factors (Appendix D)
-injection_recovery/       injection and recovery tests (Appendix D)
+injection_recovery/       injection and recovery test of the pipeline: Fig. 5
 tools/                    packing, unpacking and reproduction scripts
 ```
 
@@ -52,9 +52,10 @@ physical units, `n_pulsares` = number of pulsars combined).
 Redraw a figure (needs only `numpy` and `matplotlib`):
 
 ```bash
-python linear/recreate_fig_1.py
-python quadratic/recreate_fig_2.py
+python linear/recreate_fig_2a.py
+python quadratic/recreate_fig_2b.py
 python vector/recreate_fig_3.py
+python injection_recovery/recreate_fig_5.py      # also needs scipy
 ```
 
 With matplotlib 3.10.9 the PDFs are identical in content to those of the
@@ -82,7 +83,8 @@ repository small. `tools/unpack_histograms.py` restores the original files and
 
 See [`pipeline/README.md`](pipeline/README.md): how to obtain the NANOGrav
 data, run the chains, and aggregate them. The pipeline files are the ones of
-the final runs, byte for byte.
+the final runs, byte for byte. The injection and recovery test is rerun with
+the same code; see [`injection_recovery/README.md`](injection_recovery/README.md).
 
 ## Requirements
 
@@ -98,16 +100,11 @@ Levels 1 and 2 need only `numpy`, `scipy` and `matplotlib`. Level 3 also needs
 
 ## Citation
 
-If you use this code or these results, please cite the accompanying paper:
-
-> F. Huxhagen and D. López Nacir, *Constraints on ultralight dark matter
-> couplings from orbital perturbations of binary pulsars* (2026),
-> citation details to be added upon publication.
-
-and the NANOGrav 15-year data set, on which the analysis is based
+If you use this code or these results, please cite this repository (the
+metadata are in `CITATION.cff`) and the NANOGrav 15-year data set, on which the
+analysis is based
 ([doi:10.5281/zenodo.16051178](https://doi.org/10.5281/zenodo.16051178);
-Agazie et al., ApJL 951, L9 (2023)). `CITATION.cff` contains the citation
-metadata.
+Agazie et al., ApJL 951, L9 (2023)).
 
 ## License
 

@@ -1,0 +1,32 @@
+{
+  "title": "Constraints on ultralight dark matter couplings from orbital perturbations of binary pulsars: code and data products",
+  "upload_type": "software",
+  "description": "<p>Code and data products of <em>Constraints on ultralight dark matter couplings from orbital perturbations of binary pulsars</em> (F. Huxhagen and D. López Nacir, in preparation). Using the wideband data of the 50 binary pulsars of the NANOGrav 15-year data set, the paper sets 95% credible upper limits on three couplings of ultralight dark matter between 1e-23 and 1e-18 eV: a linear and a quadratic universal coupling of a scalar field, and a vector field coupled to B−L.</p><p>The record contains the production pipeline, the single-pulsar histograms of the upper-limit runs, the combined upper limits (as plain-text tables and NumPy archives), the external bounds and the scripts that draw the figures of the paper. See README.md.</p>",
+  "creators": [
+    {
+      "name": "Huxhagen, Federico",
+      "affiliation": "Universidad de Buenos Aires, FCEyN, Departamento de Física; CONICET, Instituto de Física de Buenos Aires (IFIBA)"
+    },
+    {
+      "name": "López Nacir, Diana",
+      "affiliation": "Universidad de Buenos Aires, FCEyN, Departamento de Física; CONICET, Instituto de Física de Buenos Aires (IFIBA)"
+    }
+  ],
+  "license": "MIT",
+  "keywords": [
+    "ultralight dark matter",
+    "binary pulsars",
+    "pulsar timing",
+    "NANOGrav",
+    "scalar field",
+    "dark photon"
+  ],
+  "related_identifiers": [
+    {
+      "identifier": "10.5281/zenodo.16051178",
+      "relation": "isDerivedFrom",
+      "scheme": "doi",
+      "resource_type": "dataset"
+    }
+  ]
+}

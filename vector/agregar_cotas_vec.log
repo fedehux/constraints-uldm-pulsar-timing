@@ -1,0 +1,6 @@
+[agregar_cotas] vec version=final-2026-10-10-dc05  prior [-30.000, -14.000]  3200 bins  SUAVIZADO=0.03 TAIL=0.05 ANCLA=0.7 COLA=potencias EXPONENTE=-2.0
+  masas 1476; completas (50 pulsares): 1476; incompletas: 0
+  margen minimo de la cota al techo del prior: 1.64 dex (m = 1.000e-18)
+  ESS minimo 1; mediana de ESS minimos por masa 35
+  cadenas con >50% de muestras a menos de 0.5 dex del techo: 2206 (son pulsares sin sensibilidad a esa masa; su ln Z_i es una meseta)
+  guardado C:/Users/fedeh/version_final_local/out_vec_cotas\COTAS_vec.npz

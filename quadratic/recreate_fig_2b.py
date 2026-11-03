@@ -1,12 +1,13 @@
-"""Recreate Fig. 2 of the paper: 95% credible upper limit on the quadratic
+"""Recreate Fig. 2(b) of the paper: 95% credible upper limit on the quadratic
 scalar coupling, shown as sqrt(beta), as a function of the ULDM mass.
 
 The limit is read from ``COTAS_beta.npz`` (written by
 ``pipeline/agregar_cotas.py``; see ``tools/reproduce_bounds.py``) and the
 external bounds from ``other_constraints/``:
-  - PTA.txt        PTA search with inter-pulsar correlations (green)
-  - PTAuncorr.txt  PTA search without correlations (grey)
-  - cassini_betas.txt  Cassini search for a stochastic GW background (orange)
+  - PTA.txt        PTA limit on the gravitational ULDM signal, recast onto beta,
+                   with inter-pulsar correlations (green)
+  - PTAuncorr.txt  the same limit without inter-pulsar correlations (grey)
+  - cassini_betas.txt  Cassini limit on a stochastic GW background, recast onto beta (orange)
 Run from any directory; the figure is written next to this script as
 ``constraints_on_sqrtbeta_quadratic.pdf`` and ``.png``.
 """
@@ -75,7 +76,7 @@ def configure_ticks(ax):
     ax.xaxis.set_minor_formatter(mticker.NullFormatter())
     ax.yaxis.set_minor_formatter(mticker.NullFormatter())
     ax.tick_params(which="both", direction="in", top=True, right=True)
-    ax.tick_params(axis="both", which="major", length=4, width=0.7, labelsize=8)
+    ax.tick_params(axis="both", which="major", length=4, width=0.7, labelsize=9)
     ax.tick_params(axis="both", which="minor", length=2, width=0.5)
 
 
@@ -90,8 +91,9 @@ def main():
     ax.set_yscale("log")
     ax.set_xlim(1e-23, 1e-18)
     ax.set_ylim(1e-19, 1e-9)
-    ax.set_xlabel(r"$m$ [eV]", fontsize=10)
-    ax.set_ylabel(r"$\sqrt{\beta}$ [GeV$^{-1}$]", fontsize=10, labelpad=2)
+    ax.set_xlabel(r"$m$ [eV]", fontsize=11)
+    ax.set_ylabel(r"$\sqrt{\beta}$ [GeV$^{-1}$]", fontsize=11, labelpad=2)
+    ax.set_title("(b)", fontsize=11)   # panel (b) of Fig. 2
     top = ax.get_ylim()[1]
 
     # Regions above each curve are excluded.
@@ -106,13 +108,13 @@ def main():
     ax.plot(m_cas, b_cas, color=C_CASSINI, lw=1.0, zorder=3)
 
     ax.fill_between(masses, sqrtb, top, color="grey", alpha=0.25, zorder=4)
-    ax.plot(masses, sqrtb, color=C_OURS, lw=1.0, zorder=10)
+    ax.plot(masses, sqrtb, color=C_OURS, lw=0.8, zorder=10)
 
     # A single label for the two PTA curves.
-    ax.text(3e-23, 2e-18, "PTA", color=C_PTA_CORRELATED,
-            fontsize=7, ha="right", va="bottom", weight="bold")
-    ax.text(0.8e-19, 1e-15, "Cassini stochastic", color=C_CASSINI,
-            fontsize=7, ha="right", va="bottom", weight="bold", rotation=10)
+    ax.text(1.3e-23, 2e-18, "PTA", color=C_PTA_CORRELATED,
+            fontsize=8.5, ha="left", va="bottom", weight="bold")
+    ax.text(2e-19, 2e-15, "Cassini stochastic", color=C_CASSINI,
+            fontsize=8.5, ha="right", va="bottom", weight="bold", rotation=10)
 
     configure_ticks(ax)
     fig.tight_layout()

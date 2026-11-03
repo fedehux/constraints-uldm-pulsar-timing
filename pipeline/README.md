@@ -11,14 +11,11 @@ and some identifiers are in Spanish; the glossary at the end translates them.
 | `pipeline_alpha.py`, `pipeline_beta.py`, `pipeline_vec.py` | Single-pulsar analysis for the linear (alpha), quadratic (beta) and vector (g) couplings: loading of the NANOGrav wideband data with PINT, ULDM timing template, ENTERPRISE likelihood with the timing model and red-noise Fourier coefficients marginalized analytically, and one PTMCMCSampler chain per (mass, pulsar). |
 | `template_ecc_vec.py` | Vector template for eccentric orbits (Appendix B of the paper). |
 | `masas_pulsares.csv` | Pulsar mass, companion mass and inclination used by the vector template (Table II / Appendix C of the paper). |
-| `rangos_prior.py` | Prior range of each coupling (Table I of the paper), shared by the upper-limit and Bayes-factor runs. |
+| `rangos_prior.py` | Prior range of each coupling (Table I of the paper). |
 | `masas_alpha_cotas.txt`, `masas_beta_cotas.txt`, `masas_vec_cotas.txt` | ULDM masses of the upper-limit runs (407, 500 and 1476). |
-| `masas_bf.txt` | ULDM masses of the Bayes-factor runs (200, all couplings). |
-| `worker_final.py` | Runs the chains of one coupling and mode and stores, for each (mass, pulsar), only the histogram of log10 of the coupling (0.005 dex bins). Idempotent: rerunning continues where it stopped. |
+| `worker_final.py` | Runs the chains of one coupling and stores, for each (mass, pulsar), only the histogram of log10 of the coupling (0.005 dex bins). Idempotent: rerunning continues where it stopped. |
 | `run_final.slurm` | SLURM script used on the cluster (one node, 32 cores per job). |
 | `agregar_cotas.py` | Combines the single-pulsar histograms at each mass into the 95% upper limit (Sec. III C of the paper); writes `COTAS_<coupling>.npz`. |
-| `agregar_bf.py` | Combined Bayes factor at each mass (Appendix D); writes `BF_<coupling>_vs_m.npz`. |
-| `chequeo_final.py` | Pre-flight checks run before submitting the final jobs. |
 
 ## Data
 
@@ -30,9 +27,8 @@ point `NANOGRAV_ROOT` to the unpacked folder
 
 ## Running
 
-Each run is defined by a coupling (`ACOPLE` = `alpha`, `beta` or `vec`) and a
-mode (`MODO` = `cotas` for the upper limits, prior uniform in the coupling;
-`bf` for the Bayes factors, prior uniform in its logarithm):
+Each run is defined by a coupling (`ACOPLE` = `alpha`, `beta` or `vec`). The
+upper-limit runs use `MODO=cotas`, with a prior uniform in the coupling:
 
 ```bash
 export NANOGRAV_ROOT=/path/to/NANOGrav15yr_PulsarTiming_v2.1.0   # always set it
@@ -43,7 +39,7 @@ ACOPLE=alpha OUT_ROOT=$PWD/out_alpha_cotas python agregar_cotas.py
 ```
 
 The histograms are written to `$OUT_ROOT/hist/m_<mass>__<pulsar>__s0.npz`.
-The seed of every chain is fixed by (coupling, mode, mass, pulsar), so a rerun
+The seed of every chain is fixed by (`ACOPLE`, `MODO`, mass, pulsar), so a rerun
 reproduces the same chains for the same software versions. Useful variables:
 `PULSARS` (comma-separated subset), `MASAS_ARCHIVO` (another mass file),
 `JOB_ID`/`N_JOBS` (split the run between jobs), `CHAIN_TMP` (scratch for the
@@ -73,6 +69,7 @@ aggregation (`tools/reproduce_bounds.py`).
 |---|---|
 | acople | coupling |
 | cotas | upper limits (bounds) |
+| modo | run mode |
 | masas | masses |
 | rangos_prior | prior ranges |
 | agregar | aggregate (combine) |
