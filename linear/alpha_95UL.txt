@@ -1,6 +1,6 @@
 # 95% credible upper limit, linear universal coupling of a scalar field, M_i(Phi) = M_i (1 + alpha Phi).
 # Constraints on ultralight dark matter couplings from orbital perturbations of binary pulsars
-# (Huxhagen & Lopez Nacir). Generated from linear/COTAS_alpha.npz.
+# (Huxhagen & Lopez Nacir). Generated from linear/bounds_alpha.npz.
 # mass [eV]    alpha [GeV^-1]
 1.000000e-23    1.065294e-23
 1.060420e-23    9.824175e-24

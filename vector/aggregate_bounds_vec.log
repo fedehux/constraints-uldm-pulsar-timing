@@ -1,0 +1,6 @@
+[aggregate_bounds] vec version=final-2026-10-10-dc05  prior [-30.000, -14.000]  3200 bins  SMOOTHING=0.03 TAIL_FRAC=0.05 ANCHOR=0.7 TAIL=power_law EXPONENT=-2.0
+  masses 1476; complete (50 pulsars): 1476; incomplete: 0
+  smallest margin of the limit below the prior ceiling: 1.64 dex (m = 1.000e-18)
+  minimum ESS 1; median over masses of the per-mass minimum ESS 35
+  chains with >50% of their samples within 0.5 dex of the ceiling: 2206 (pulsars insensitive at that mass; their ln Z_i is a plateau)
+  saved bounds_vec.npz

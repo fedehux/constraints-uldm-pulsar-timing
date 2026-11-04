@@ -1,6 +1,6 @@
 # 95% credible upper limit, B-L vector coupling g, for a charge-to-mass difference Delta c = 0.5.
 # Constraints on ultralight dark matter couplings from orbital perturbations of binary pulsars
-# (Huxhagen & Lopez Nacir). Generated from vector/COTAS_vec.npz.
+# (Huxhagen & Lopez Nacir). Generated from vector/bounds_vec.npz.
 # mass [eV]    g
 1.000000e-23    7.776142e-24
 1.059560e-23    7.000762e-24

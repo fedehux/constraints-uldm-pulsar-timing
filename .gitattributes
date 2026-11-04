@@ -1,2 +1,0 @@
-# Keep the pipeline byte-identical on every platform, so pipeline/MD5SUMS holds after checkout.
-pipeline/** -text

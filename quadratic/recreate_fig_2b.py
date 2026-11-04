@@ -1,8 +1,8 @@
 """Recreate Fig. 2(b) of the paper: 95% credible upper limit on the quadratic
 scalar coupling, shown as sqrt(beta), as a function of the ULDM mass.
 
-The limit is read from ``COTAS_beta.npz`` (written by
-``pipeline/agregar_cotas.py``; see ``tools/reproduce_bounds.py``) and the
+The limit is read from ``bounds_beta.npz`` (written by
+``pipeline/aggregate_bounds.py``; see ``tools/reproduce_bounds.py``) and the
 external bounds from ``other_constraints/``:
   - PTA.txt        PTA limit on the gravitational ULDM signal, recast onto beta,
                    with inter-pulsar correlations (green)
@@ -19,10 +19,10 @@ import matplotlib
 # backend is used and the figure is only saved.
 try:
     get_ipython().run_line_magic("matplotlib", "inline")
-    EN_SPYDER = True
+    IN_SPYDER = True
 except NameError:
     matplotlib.use("Agg")
-    EN_SPYDER = False
+    IN_SPYDER = False
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
@@ -30,7 +30,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 CONSTRAINTS = HERE / "other_constraints"
-RESULT_NPZ = HERE / "COTAS_beta.npz"   # final run, pipeline/agregar_cotas.py
+RESULT_NPZ = HERE / "bounds_beta.npz"   # final run, pipeline/aggregate_bounds.py
 OUTPUT_PDF = HERE / "constraints_on_sqrtbeta_quadratic.pdf"
 OUTPUT_PNG = HERE / "constraints_on_sqrtbeta_quadratic.png"
 
@@ -51,9 +51,9 @@ def load_result(path):
     with np.load(path, allow_pickle=False) as data:
         masses = np.asarray(data["masses_eV"], dtype=float)
         # limit in physical units (log10, GeV^-1); only masses with all 50 pulsars
-        sqrtb = 10.0 ** np.asarray(data["ul_fisico_log10"], dtype=float)
-        completa = np.asarray(data["n_pulsares"]) >= 50
-    valid = completa & np.isfinite(masses) & np.isfinite(sqrtb) & (masses > 0) & (sqrtb > 0)
+        sqrtb = 10.0 ** np.asarray(data["log10_ul_physical"], dtype=float)
+        complete = np.asarray(data["n_pulsars"]) >= 50
+    valid = complete & np.isfinite(masses) & np.isfinite(sqrtb) & (masses > 0) & (sqrtb > 0)
     if not valid.any():
         raise ValueError(f"No valid points in {path}")
     order = np.argsort(masses[valid])
@@ -120,7 +120,7 @@ def main():
     fig.tight_layout()
     fig.savefig(OUTPUT_PDF, bbox_inches="tight")
     fig.savefig(OUTPUT_PNG, bbox_inches="tight", dpi=300)
-    if EN_SPYDER:
+    if IN_SPYDER:
         plt.show()
     else:
         plt.close(fig)

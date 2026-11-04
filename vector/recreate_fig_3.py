@@ -1,8 +1,8 @@
 """Recreate Fig. 3 of the paper: 95% credible upper limit on the B-L vector
 coupling g as a function of the ULDM mass, for Delta c = 0.5.
 
-The limit is read from ``COTAS_vec.npz`` (written by
-``pipeline/agregar_cotas.py``; see ``tools/reproduce_bounds.py``) and the
+The limit is read from ``bounds_vec.npz`` (written by
+``pipeline/aggregate_bounds.py``; see ``tools/reproduce_bounds.py``) and the
 external bounds from ``other_constraints/``:
   - PPTA.txt                    Parkes Pulsar Timing Array (green)
   - Eot-Wash-EP.txt             Eöt-Wash test of the equivalence principle (red)
@@ -20,17 +20,17 @@ import matplotlib
 # backend is used and the figure is only saved.
 try:
     get_ipython().run_line_magic("matplotlib", "inline")
-    EN_SPYDER = True
+    IN_SPYDER = True
 except NameError:
     matplotlib.use("Agg")
-    EN_SPYDER = False
+    IN_SPYDER = False
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
 
 HERE = Path(__file__).resolve().parent
 CONSTRAINTS = HERE / "other_constraints"
-RESULT_NPZ = Path(os.environ.get("RESULT_NPZ", HERE / "COTAS_vec.npz"))   # final run, pipeline/agregar_cotas.py
+RESULT_NPZ = Path(os.environ.get("RESULT_NPZ", HERE / "bounds_vec.npz"))   # final run, pipeline/aggregate_bounds.py
 OUTPUT_PDF = HERE / "constraints_on_g_vector.pdf"
 OUTPUT_PNG = HERE / "constraints_on_g_vector.png"
 
@@ -52,9 +52,9 @@ def load_result(path):
     """This work: masses [eV] and the 95% upper limit on g."""
     with np.load(path, allow_pickle=False) as data:
         masses = np.asarray(data["masses_eV"], dtype=float)
-        g = 10.0 ** np.asarray(data["ul_fisico_log10"], dtype=float)
-        completa = np.asarray(data["n_pulsares"]) >= 50   # only masses with all 50 pulsars
-    valid = completa & np.isfinite(masses) & np.isfinite(g) & (masses > 0) & (g > 0)
+        g = 10.0 ** np.asarray(data["log10_ul_physical"], dtype=float)
+        complete = np.asarray(data["n_pulsars"]) >= 50   # only masses with all 50 pulsars
+    valid = complete & np.isfinite(masses) & np.isfinite(g) & (masses > 0) & (g > 0)
     if not valid.any():
         raise ValueError(f"No valid points in {path}")
     order = np.argsort(masses[valid])
@@ -70,18 +70,18 @@ def main():
     ax.set_xlabel(r"$m$ [eV]", fontsize=11)
     ax.set_ylabel("g", fontsize=11, rotation=0, labelpad=10)
 
-    externas = {}
-    for nombre, color, z in (("PPTA", C_PPTA, 3), ("Eot-Wash-EP", C_EOT, 2),
+    external = {}
+    for name, color, z in (("PPTA", C_PPTA, 3), ("Eot-Wash-EP", C_EOT, 2),
                              ("LISA-Path-relative-acc", C_LISA, 3)):
-        arr = np.loadtxt(CONSTRAINTS / f"{nombre}.txt", skiprows=3, usecols=(0, 1))
-        externas[nombre] = arr
+        arr = np.loadtxt(CONSTRAINTS / f"{name}.txt", skiprows=3, usecols=(0, 1))
+        external[name] = arr
         ax.fill_between(arr[:, 0], arr[:, 1], ax.get_ylim()[1], color=color, alpha=0.15, zorder=z)
         ax.plot(arr[:, 0], arr[:, 1], color=color, lw=1.0, zorder=z + 0.1)
 
     ax.plot(m_new, g_new, color=C_MAIN, lw=0.7, label="This work", zorder=10)
 
     # MICROSCOPE, over the mass range of the Eot-Wash curve
-    ax.fill_between(externas["Eot-Wash-EP"][:, 0], G_MICROSCOPE, ax.get_ylim()[1], color="grey", alpha=0.4)
+    ax.fill_between(external["Eot-Wash-EP"][:, 0], G_MICROSCOPE, ax.get_ylim()[1], color="grey", alpha=0.4)
     ax.axhline(y=G_MICROSCOPE, color="grey", lw=0.8)
 
     ax.text(4e-20, 0.8e-25, "MICROSCOPE", color=C_MICRO, fontsize=7, va="bottom", ha="right", weight="bold")
@@ -102,7 +102,7 @@ def main():
     fig.tight_layout()
     fig.savefig(OUTPUT_PDF, bbox_inches="tight", dpi=300)
     fig.savefig(OUTPUT_PNG, bbox_inches="tight", dpi=300)
-    if EN_SPYDER:
+    if IN_SPYDER:
         plt.show()
     else:
         plt.close(fig)

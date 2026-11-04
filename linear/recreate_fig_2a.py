@@ -1,8 +1,8 @@
 """Recreate Fig. 2(a) of the paper: 95% credible upper limit on the linear
 scalar coupling alpha as a function of the ULDM mass.
 
-The limit is read from ``COTAS_alpha.npz`` (written by
-``pipeline/agregar_cotas.py``; see ``tools/reproduce_bounds.py``) and the
+The limit is read from ``bounds_alpha.npz`` (written by
+``pipeline/aggregate_bounds.py``; see ``tools/reproduce_bounds.py``) and the
 external bounds from ``other_constraints/``.  Run from any directory; the PDF
 is written next to this script as ``constraints_on_alpha_linear.pdf``.
 """
@@ -14,10 +14,10 @@ import matplotlib
 # backend is used and the figure is only saved.
 try:
     get_ipython().run_line_magic("matplotlib", "inline")
-    EN_SPYDER = True
+    IN_SPYDER = True
 except NameError:
     matplotlib.use("Agg")
-    EN_SPYDER = False
+    IN_SPYDER = False
 import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 import numpy as np
@@ -25,7 +25,7 @@ import numpy as np
 
 HERE = Path(__file__).resolve().parent
 CONSTRAINTS = HERE / "other_constraints"
-RESULT_NPZ = HERE / "COTAS_alpha.npz"   # final run, pipeline/agregar_cotas.py
+RESULT_NPZ = HERE / "bounds_alpha.npz"   # final run, pipeline/aggregate_bounds.py
 OUTPUT_PDF = HERE / "constraints_on_alpha_linear.pdf"
 
 # Paper style and palette shared with the other final-result figures.
@@ -45,9 +45,9 @@ def load_result(path):
     with np.load(path, allow_pickle=False) as data:
         masses = np.asarray(data["masses_eV"], dtype=float)
         # limit in physical units (log10, GeV^-1); only masses with all 50 pulsars
-        alpha = 10.0 ** np.asarray(data["ul_fisico_log10"], dtype=float)
-        completa = np.asarray(data["n_pulsares"]) >= 50
-    valid = completa & np.isfinite(masses) & np.isfinite(alpha) & (masses > 0) & (alpha > 0)
+        alpha = 10.0 ** np.asarray(data["log10_ul_physical"], dtype=float)
+        complete = np.asarray(data["n_pulsars"]) >= 50
+    valid = complete & np.isfinite(masses) & np.isfinite(alpha) & (masses > 0) & (alpha > 0)
     if not valid.any():
         raise ValueError(f"No valid points in {path}")
     order = np.argsort(masses[valid])
@@ -135,7 +135,7 @@ def main():
     configure_ticks(ax)
     fig.tight_layout()
     fig.savefig(OUTPUT_PDF, bbox_inches="tight")
-    if EN_SPYDER:
+    if IN_SPYDER:
         plt.show()
     else:
         plt.close(fig)

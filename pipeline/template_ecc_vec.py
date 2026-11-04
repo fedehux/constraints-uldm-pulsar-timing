@@ -1,40 +1,33 @@
-# -*- coding: utf-8 -*-
-"""
-template_ecc_vec.py
-===================
-Template ULDM VECTORIAL (spin-1) para orbitas EXCENTRICAS (rama DD del timing
-model). Implementa el cuaderno `cuaderno_doctorado_vectorial_excentrico.tex`.
+"""Vector (spin-1) ULDM template for eccentric orbits (DD branch of the timing
+model; Appendix B of the paper). Used by pipeline_vec.py for the binaries with
+e >= ECC_LOW_THRESHOLD.
 
-Esto llena el stub `compute_h_template` (rama ecc >= ECC_LOW_THRESHOLD) de
-`Pipelines corregidos/pipeline_vectorial.py`, que hasta ahora devolvia ceros.
-
-Convenciones (identicas al .tex):
-    l      = wb (t - T0)          anomalia media, medida desde el periastro
+Conventions:
+    l      = wb (t - T0)          mean anomaly, measured from the periastron
     k      = m / wb
-    Ups0   = Upsilon + m T0       fase estocastica corrida (se samplea directo)
-    varphi                        acimut de n_hat DESDE EL PERIASTRO (directo)
-    omega  = OM del par           argumento del periastro (conocido, no se samplea)
+    Ups0   = Upsilon + m T0       shifted stochastic phase (sampled directly)
+    varphi                        azimuth of n_hat measured from the periastron (sampled directly)
+    omega  = OM of the .par file  argument of periastron (known, not sampled)
     sig    = sqrt(1 - e^2)
-    u=cos E, w=sin E, q=r/a=1-e u, u'=-w/q, w'=u/q
+    u = cos E, w = sin E, q = r/a = 1 - e u, u' = -w/q, w' = u/q
 
-Los cinco coeficientes de Bessel:
-    p_n = 2 Jn'(ne)/n                       (de cos E - e)
-    q_n = 2 Jn(ne)/(ne)                     (de sin E)
-    a_n = 2 [Jn/(ne) - Jn']                 (de u' + w)
-    b_n = 2 [(1-e^2) Jn - (e/n) Jn']        (de los dos corchetes de sig/e^2)
-    c_n = 2 [Jn/(ne) - (1-e^2) Jn']         (de (1-e^2) u' + w)
+The five Bessel coefficients:
+    p_n = 2 Jn'(ne)/n                       (from cos E - e)
+    q_n = 2 Jn(ne)/(ne)                     (from sin E)
+    a_n = 2 [Jn/(ne) - Jn']                 (from u' + w)
+    b_n = 2 [(1-e^2) Jn - (e/n) Jn']        (from the two brackets of sig/e^2)
+    c_n = 2 [Jn/(ne) - (1-e^2) Jn']         (from (1-e^2) u' + w)
 
-Las primitivas se escriben ADIMENSIONALIZADAS (S_n = wb * calS_n, etc.) para
-reutilizar los helpers estables con sinc del pipeline vectorial, que no tienen
-rama en la resonancia n = k:
+The primitives are written dimensionless (S_n = wb * calS_n, etc.) so that the
+sinc-stable helpers apply, with no special branch at the resonance n = k:
     S_n = wb calS_n = 0.5 [ rsin(n-k, l, -Ups0) - rsin(n+k, l, +Ups0) ]
     C_n = wb calC_n = 0.5 [ rcos(n-k, l, -Ups0) - rcos(n+k, l, +Ups0) ]
     C_0 = wb calC_0 = -rcos(k, l, Ups0)
-La resonancia (n = k) cae en el primer termino y la maneja el sinc.
+The resonance (n = k) falls in the first term and is handled by the sinc.
 
-Canal PB: usa el PROMEDIO CORRIDO <da/a> sobre [T0, t] (no el instantaneo), que
-es la correccion de la directora. Se obtiene cambiando rsin/rcos por sus
-promedios avg_rsin/avg_rcos, que tambien son estables en la resonancia.
+PB channel: the running average <delta a/a> over [T0, t] instead of the
+instantaneous value, obtained by replacing rsin/rcos with avg_rsin/avg_rcos,
+which are also stable at the resonance.
 """
 
 import numpy as np
@@ -42,52 +35,52 @@ from scipy.special import jv, jvp
 
 __all__ = ["deltas_ecc_vec", "compute_h_template_ecc", "N_TERMS_ECC"]
 
-N_TERMS_ECC = 25          # armonicos del desarrollo de Bessel (e<=0.44 -> 1e-8)
+N_TERMS_ECC = 25          # Bessel harmonics (1e-8 accuracy for e <= 0.44)
 
 
 # ---------------------------------------------------------------------------
-# Helpers estables (mismos que pipeline_vectorial.py; replicados para que este
-# modulo sea autocontenido y testeable sin enterprise).
+# Stable helpers (as in pipeline_vec.py, repeated so that this module can be
+# tested without ENTERPRISE)
 # ---------------------------------------------------------------------------
 def _rsin(delta, Psi, p):
-    """[sin(delta*Psi + p) - sin(p)] / delta ; limite delta->0: Psi cos(p)."""
+    """[sin(delta*Psi + p) - sin(p)] / delta ; limit delta -> 0: Psi cos(p)."""
     return Psi * np.cos(0.5 * delta * Psi + p) * np.sinc(delta * Psi / (2.0 * np.pi))
 
 
 def _rcos(delta, Psi, p):
-    """[cos(delta*Psi + p) - cos(p)] / delta ; limite delta->0: -Psi sin(p)."""
+    """[cos(delta*Psi + p) - cos(p)] / delta ; limit delta -> 0: -Psi sin(p)."""
     return -Psi * np.sin(0.5 * delta * Psi + p) * np.sinc(delta * Psi / (2.0 * np.pi))
 
 
 def _z_minus_sin_over_z2(z):
-    """(z - sin z)/z^2, estable en z->0 (serie para |z|<0.1)."""
+    """(z - sin z)/z^2, stable at z -> 0 (series for |z| < 0.1)."""
     z = np.asarray(z, dtype=np.float64)
-    chico = np.abs(z) < 0.1
-    zs = np.where(chico, 1.0, z)
-    directa = (zs - np.sin(zs)) / (zs * zs)
+    small = np.abs(z) < 0.1
+    zs = np.where(small, 1.0, z)
+    direct = (zs - np.sin(zs)) / (zs * zs)
     z2 = z * z
-    serie = z * (1.0 / 6.0 + z2 * (-1.0 / 120.0 + z2 * (
+    series = z * (1.0 / 6.0 + z2 * (-1.0 / 120.0 + z2 * (
         1.0 / 5040.0 + z2 * (-1.0 / 362880.0 + z2 / 39916800.0))))
-    return np.where(chico, serie, directa)
+    return np.where(small, series, direct)
 
 
 def _avg_rsin(delta, Psi, p):
-    """<_rsin(delta, Psi', p)> promediado en Psi' de 0 a Psi."""
+    """<_rsin(delta, Psi', p)> averaged over Psi' from 0 to Psi."""
     z = delta * Psi
     s2 = np.sinc(z / (2.0 * np.pi)) ** 2
     return Psi * (0.5 * np.cos(p) * s2 - np.sin(p) * _z_minus_sin_over_z2(z))
 
 
 def _avg_rcos(delta, Psi, p):
-    """<_rcos(delta, Psi', p)> promediado en Psi' de 0 a Psi."""
+    """<_rcos(delta, Psi', p)> averaged over Psi' from 0 to Psi."""
     z = delta * Psi
     s2 = np.sinc(z / (2.0 * np.pi)) ** 2
     return -Psi * (0.5 * np.sin(p) * s2 + np.cos(p) * _z_minus_sin_over_z2(z))
 
 
 # ---------------------------------------------------------------------------
-# Coeficientes de Bessel (cacheados por (e, N): no dependen de la masa ni de
-# los angulos, asi que se calculan una sola vez por pulsar).
+# Bessel coefficients, cached by (e, N): they depend neither on the mass nor on
+# the angles, so they are computed once per pulsar.
 # ---------------------------------------------------------------------------
 _COEF_CACHE = {}
 
@@ -108,30 +101,30 @@ def bessel_coeffs(e, N=N_TERMS_ECC):
 
 
 # ---------------------------------------------------------------------------
-# Nucleo: las perturbaciones de los elementos orbitales
+# Perturbations of the orbital elements
 # ---------------------------------------------------------------------------
 def deltas_ecc_vec(k, Ups0, vartheta, varphi, l, e, omega, iota, sin_i,
-                   pref, prefT, wb, N=N_TERMS_ECC, promediar_pb=True):
+                   pref, prefT, wb, N=N_TERMS_ECC, average_pb=True):
     """
-    Devuelve el dict de perturbaciones de los elementos orbitales.
+    Perturbations of the orbital elements.
 
     k     : m / wb                       l    : wb (t - T0), array
     pref  : F_unit / (a wb^2)            prefT: F_unit / (a wb^3)
 
-    Salida: daa (delta a/a), daa_pb (la que ve el canal PB), dee (delta e),
-            edw (e delta varpi_*), diota, dOmega, dxx (delta x/x),
-            dOM (delta omega, rad), dT0 (segundos).
+    Returns a dict with daa (delta a/a), daa_pb (the one the PB channel sees),
+    dee (delta e), edw (e delta varpi_*), diota, dOmega, dxx (delta x/x),
+    dOM (delta omega, rad) and dT0 (seconds).
     """
     cf = bessel_coeffs(e, N)
-    n = cf["n"][:, None]                       # (N,1)
-    L = np.asarray(l, dtype=np.float64)[None, :]   # (1,ntoa)
+    n = cf["n"][:, None]                             # (N,1)
+    L = np.asarray(l, dtype=np.float64)[None, :]     # (1,ntoa)
     sig = np.sqrt(1.0 - e * e)
     e2 = e * e
 
-    # --- primitivas adimensionales (N, ntoa); la resonancia vive en (n-k) ---
+    # dimensionless primitives (N, ntoa); the resonance lives in (n-k)
     S = 0.5 * (_rsin(n - k, L, -Ups0) - _rsin(n + k, L, Ups0))
     C = 0.5 * (_rcos(n - k, L, -Ups0) - _rcos(n + k, L, Ups0))
-    C0 = -_rcos(k, np.asarray(l, dtype=np.float64), Ups0)     # sector n=0
+    C0 = -_rcos(k, np.asarray(l, dtype=np.float64), Ups0)     # n = 0 sector
 
     cph, sph = np.cos(varphi), np.sin(varphi)
     svt, cvt = np.sin(vartheta), np.cos(vartheta)
@@ -147,11 +140,11 @@ def deltas_ecc_vec(k, Ups0, vartheta, varphi, l, e, omega, iota, sin_i,
     sumpC = dot(cf["p"], C)
     sumqS = dot(cf["q"], S)
 
-    # --- delta a / a  (instantaneo: canal A1) ---
+    # delta a / a, instantaneous (A1 channel)
     daa = 4.0 * pref * svt * (cph * sumJnpS - (sig / e) * sph * sumJnC)
 
-    # --- delta a / a promediado en [T0, t]  (canal PB) ---
-    if promediar_pb:
+    # delta a / a averaged over [T0, t] (PB channel)
+    if average_pb:
         Sa = 0.5 * (_avg_rsin(n - k, L, -Ups0) - _avg_rsin(n + k, L, Ups0))
         Ca = 0.5 * (_avg_rcos(n - k, L, -Ups0) - _avg_rcos(n + k, L, Ups0))
         daa_pb = 4.0 * pref * svt * (cph * dot(cf["Jnp"], Sa)
@@ -159,22 +152,22 @@ def deltas_ecc_vec(k, Ups0, vartheta, varphi, l, e, omega, iota, sin_i,
     else:
         daa_pb = daa
 
-    # --- delta e ---
+    # delta e
     dee = -pref * svt * (((1.0 - e2) / e) * cph * sumaS
                          + (sig / e2) * sph * (1.5 * e2 * C0 + sumbC))
 
-    # --- e delta varpi_*  (parte en el plano del periastro) ---
+    # e delta varpi_* (in-plane part)
     edw = -pref * svt * ((sig / e2) * cph * (-1.5 * e2 * C0 + sumbC)
                          - (sph / e) * sumcS)
 
-    # --- sectores fuera del plano ---
+    # out-of-plane sectors
     Pi = -1.5 * e * C0 + sumpC
     X = sumqS
     diota = -(pref / sig) * cvt * (np.cos(omega) * Pi - sig * np.sin(omega) * X)
     dOmega = -(pref / (sig * sin_i)) * cvt * (np.sin(omega) * Pi
                                               + sig * np.cos(omega) * X)
 
-    # --- canales observables ---
+    # observable channels
     dvarpi = edw / e
     dxx = daa + (np.cos(iota) / sin_i) * diota
     dOM = dvarpi - np.cos(iota) * dOmega
@@ -186,16 +179,16 @@ def deltas_ecc_vec(k, Ups0, vartheta, varphi, l, e, omega, iota, sin_i,
 
 def compute_h_template_ecc(m_dm, rho_f, gamma_f, vartheta, varphi,
                            t_arr, partials, orb_pars,
-                           F_unit_const, N=N_TERMS_ECC, promediar_pb=True):
+                           F_unit_const, N=N_TERMS_ECC, average_pb=True):
     """
-    Template DD (excentrico) vectorial, con acople unitario (g factorizado).
+    Eccentric (DD) vector template for g = 1.
 
-    `F_unit_const` = DELTA_C / M_NUCLEON * sqrt(2 rho_DM)  (sin el rho estocastico),
-    se pasa desde el pipeline para no duplicar constantes.
+    F_unit_const = DELTA_C / M_NUCLEON * sqrt(2 rho_DM) (without the stochastic
+    amplitude rho), passed from the pipeline.
 
-    gamma_f  ES  Upsilon_0 = Upsilon + m T0   (sampleado directo; sumar la
-             constante m*T0 a una U(0,2pi) da la misma U(0,2pi)).
-    varphi   ES  el acimut medido DESDE EL PERIASTRO (idem, corrido por omega).
+    gamma_f  is Upsilon_0 = Upsilon + m T0 (sampled directly; shifting a
+             U(0, 2pi) variable by the constant m T0 leaves it U(0, 2pi)).
+    varphi   is the azimuth measured from the periastron (likewise shifted by omega).
     """
     wb = orb_pars["omega_b"]
     e = orb_pars["ecc"]
@@ -215,7 +208,7 @@ def compute_h_template_ecc(m_dm, rho_f, gamma_f, vartheta, varphi,
     k = m_dm / wb
 
     d = deltas_ecc_vec(k, gamma_f, vartheta, varphi, l, e, omega, iota, sin_i,
-                       pref, prefT, wb, N=N, promediar_pb=promediar_pb)
+                       pref, prefT, wb, N=N, average_pb=average_pb)
 
     return (partials["PB"] * PB_s * (1.5 * d["daa_pb"])
             + partials["A1"] * A1_s * d["dxx"]

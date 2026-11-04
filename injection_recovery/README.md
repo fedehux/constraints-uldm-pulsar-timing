@@ -7,8 +7,8 @@ residuals of the 50 binaries are replaced by a realization of the noise model
 of the analysis. The same realization is analysed twice: without a signal, and
 with the ULDM template at 4 times the 95% upper limit of the paper at that mass.
 Each binary draws its own amplitude, phase and, for the vector coupling,
-direction of the field. The chains are those of the production pipeline, with
-a prior uniform in log10 of the coupling.
+direction of the field. The chains use the likelihood of the pipeline, with a
+prior uniform in log10 of the coupling.
 
 | File | Role |
 |---|---|

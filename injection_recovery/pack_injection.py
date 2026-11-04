@@ -2,7 +2,7 @@
 """Pack the chains written by ``run_injection.py`` into one archive per coupling.
 
 Input:  <root>/<coupling>/<level>/hist/m_<mass>__<pulsar>__s0.npz,
-        level = no_signal (older runs: nula) and x4.
+        level = no_signal and x4.
 Output: <out_dir>/injection_<coupling>.npz with
     levels (L,), masses_str (M,), pulsars (P,)
     counts            (L, M, P, n_bins)   histogram of log10 of the coupling
@@ -19,19 +19,17 @@ import sys
 import numpy as np
 
 LEVELS = ["no_signal", "x4"]
-LEVEL_DIRS = {"no_signal": ("no_signal", "nula"), "x4": ("x4",)}
-PER_CHAIN = ["semilla", "ess", "n_muestras", "n_fuera", "n_toa", "ecc", "x_min", "x_max",
-             "frac_techo", "frac_piso", "x_inj", "rho_inj", "ups_inj", "cos_t_inj",
+PER_CHAIN = ["seed", "ess", "n_samples", "n_outside", "n_toa", "ecc", "x_min", "x_max",
+             "frac_ceiling", "frac_floor", "x_inj", "rho_inj", "ups_inj", "cos_t_inj",
              "varphi_inj", "snr2", "acc", "t_min"]
-SHARED = ["acople", "prior", "version", "likelihood", "log10_min", "log10_max", "n_bins", "n_iter"]
+SHARED = ["coupling", "prior", "version", "likelihood", "log10_min", "log10_max", "n_bins", "n_iter"]
 PATTERN = re.compile(r"m_(?P<m>[^_]+)__(?P<psr>.+)__s0\.npz$")
 
 
 def files_of(root, coupling, level):
-    for name in LEVEL_DIRS[level]:
-        fs = sorted(glob.glob(os.path.join(root, coupling, name, "hist", "m_*__*__s0.npz")))
-        if fs:
-            return fs
+    fs = sorted(glob.glob(os.path.join(root, coupling, level, "hist", "m_*__*__s0.npz")))
+    if fs:
+        return fs
     raise SystemExit(f"{coupling}: no chains for level {level} under {root}")
 
 

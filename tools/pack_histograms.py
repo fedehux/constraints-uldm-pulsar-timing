@@ -1,6 +1,6 @@
 #!/usr/bin/env python
 """Pack the per-chain histograms written by ``pipeline/worker_final.py`` into a
-few compressed archives per coupling and run mode.
+few compressed archives per coupling.
 
 The worker writes one small ``.npz`` per (mass, pulsar) chain,
 
@@ -13,8 +13,7 @@ histogram counts as a dense ``(n_masses, n_pulsars, n_bins)`` array (as
 an ``(n_masses, n_pulsars)`` array, and the scalars shared by all chains once.
 The masses are split into parts of at most ``--masses-per-part`` so that each
 file stays well below the GitHub size limits.  ``unpack_histograms.py``
-restores the original files exactly, so the production aggregators run on them
-unchanged.
+restores the original files exactly, so the aggregator runs on them unchanged.
 
 Usage:
     python pack_histograms.py <hist_dir> <output_prefix> [--masses-per-part N]
@@ -29,18 +28,18 @@ import re
 import numpy as np
 
 # per-chain scalars stored by worker_final.py (besides m_eV, m_str, name, counts)
-PER_CHAIN = ["semilla", "ess", "n_muestras", "n_fuera", "n_toa", "ecc", "n_iter",
-             "x_min", "x_max", "frac_techo", "frac_piso", "t_min"]
+PER_CHAIN = ["seed", "ess", "n_samples", "n_outside", "n_toa", "ecc", "n_iter",
+             "x_min", "x_max", "frac_ceiling", "frac_floor", "t_min"]
 # scalars that must be identical for every chain of a run
-SHARED = ["acople", "modo", "prior", "version", "likelihood", "log10_min", "log10_max", "n_bins"]
-PATRON = re.compile(r"m_(?P<m>[^_]+)__(?P<psr>.+)__s0\.npz$")
+SHARED = ["coupling", "prior", "version", "likelihood", "log10_min", "log10_max", "n_bins"]
+PATTERN = re.compile(r"m_(?P<m>[^_]+)__(?P<psr>.+)__s0\.npz$")
 
 
 def main(hist_dir, prefix, per_part):
     files = sorted(glob.glob(os.path.join(hist_dir, "m_*__*__s0.npz")))
     if not files:
         raise SystemExit(f"no histograms in {hist_dir}")
-    keys = [PATRON.search(os.path.basename(f)) for f in files]
+    keys = [PATTERN.search(os.path.basename(f)) for f in files]
     masses = sorted({k["m"] for k in keys}, key=float)
     pulsars = sorted({k["psr"] for k in keys})
     im = {m: i for i, m in enumerate(masses)}
@@ -75,8 +74,8 @@ def main(hist_dir, prefix, per_part):
         stored = counts.astype(np.uint16)          # lossless, checked above
     os.makedirs(os.path.dirname(os.path.abspath(prefix)), exist_ok=True)
     n_parts = -(-len(masses) // per_part)
-    cortes = np.array_split(np.arange(len(masses)), n_parts)
-    for p, idx in enumerate(cortes, 1):
+    splits = np.array_split(np.arange(len(masses)), n_parts)
+    for p, idx in enumerate(splits, 1):
         out = f"{prefix}_part{p:02d}of{n_parts:02d}.npz"
         np.savez_compressed(out, masses_str=np.array(masses)[idx], pulsars=np.array(pulsars),
                             present=present[idx], counts=stored[idx],

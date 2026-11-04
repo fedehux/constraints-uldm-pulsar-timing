@@ -14,7 +14,7 @@ No-signal curve: below the coupling at which a binary becomes sensitive, its
 likelihood is set to its small-coupling value (the plateau of the first dex of
 the prior), blended into the measured density over BLEND dex, and smoothed.
 Injected curve: product of the single-pulsar densities, smoothed as in the
-production aggregator (0.03 dex) plus VISTA dex for display.
+aggregator (0.03 dex) plus DISPLAY dex for display.
 
 Reads ``histograms/injection_<coupling>.npz`` (written by ``pack_injection.py``)
 and writes ``fig_injection_recovery.pdf`` and ``.png`` next to this script.
@@ -31,16 +31,16 @@ import matplotlib.pyplot as plt
 import matplotlib.ticker as mticker
 
 HERE = Path(__file__).resolve().parent
-U = 2.30817405213802e+48                 # code units -> physical units (as pipeline/agregar_cotas.py)
+U = 2.30817405213802e+48                 # code units -> physical units (as pipeline/aggregate_bounds.py)
 COUPLINGS = {
     "alpha": dict(f=lambda v: v + 0.5 * np.log10(U), label=r"$\log_{10}(\alpha/{\rm GeV}^{-1})$"),
     "beta": dict(f=lambda v: v + np.log10(U), label=r"$\log_{10}(\beta/{\rm GeV}^{-2})$"),
     "vec": dict(f=lambda v: v, label=r"$\log_{10}g$"),
 }
-SUAV_CHAIN = 0.03        # dex, production smoothing of each single-pulsar density
-VISTA = (0.05, 0.12)     # dex, display smoothing of the injected curve (away from / close to resonance)
-SUAV_NULA = 0.15         # dex, single-pulsar smoothing of the no-signal curve
-SUAV_FINAL = 0.05        # dex, final smoothing of the no-signal curve
+SMOOTH_CHAIN = 0.03       # dex, aggregator smoothing of each single-pulsar density
+DISPLAY = (0.05, 0.12)    # dex, display smoothing of the injected curve (away from / close to resonance)
+SMOOTH_NO_SIGNAL = 0.15   # dex, single-pulsar smoothing of the no-signal curve
+SMOOTH_FINAL = 0.05       # dex, final smoothing of the no-signal curve
 BLEND = 0.5              # dex, plateau -> measured transition
 
 
@@ -56,37 +56,37 @@ def read(coupling):
     out = {}
     for il, lv in enumerate(levels):
         for im, m in enumerate(masses):
-            por = {p: counts[il, im, ip] for ip, p in enumerate(pulsars) if present[il, im, ip]}
+            per_psr = {p: counts[il, im, ip] for ip, p in enumerate(pulsars) if present[il, im, ip]}
             inj = x_inj[il, im][present[il, im]]
-            out[(lv, m)] = (por, float(inj[0]) if inj.size else np.nan)
+            out[(lv, m)] = (per_psr, float(inj[0]) if inj.size else np.nan)
     return out, masses, lo, hi
 
 
-def injected_curve(por, lo, hi, vista):
-    n = len(next(iter(por.values()))); dx = (hi - lo) / n
+def injected_curve(per_psr, lo, hi, display):
+    n = len(next(iter(per_psr.values()))); dx = (hi - lo) / n
     x = lo + (np.arange(n) + 0.5) * dx
     lp = np.zeros(n)
-    for c in por.values():
-        d = gaussian_filter1d(c, SUAV_CHAIN / dx, mode="nearest") + 1e-3
+    for c in per_psr.values():
+        d = gaussian_filter1d(c, SMOOTH_CHAIN / dx, mode="nearest") + 1e-3
         lp += np.log(d / d.sum())
     p = np.exp(lp - lp.max())
-    p = gaussian_filter1d(p, vista / dx)
+    p = gaussian_filter1d(p, display / dx)
     return x, p / p.max()
 
 
-def no_signal_curve(por, lo, hi, threshold=0.5):
+def no_signal_curve(per_psr, lo, hi, threshold=0.5):
     lr = None
-    for c in por.values():
+    for c in per_psr.values():
         n = len(c); dx = (hi - lo) / n
         x = lo + (np.arange(n) + 0.5) * dx
         p0 = c[x < lo + 1.0].mean()                       # plateau, first dex of the prior
-        r = gaussian_filter1d(c, SUAV_NULA / dx, mode="nearest") / p0
+        r = gaussian_filter1d(c, SMOOTH_NO_SIGNAL / dx, mode="nearest") / p0
         above = np.nonzero(r >= threshold)[0]
         x_on = x[above[-1]] - BLEND if len(above) else lo
         w = np.clip((x - x_on) / BLEND, 0.0, 1.0)
         l = w * np.log(np.maximum(r, 1e-12))
         lr = l if lr is None else lr + l
-    lr = gaussian_filter1d(lr, SUAV_FINAL / dx, mode="nearest")
+    lr = gaussian_filter1d(lr, SMOOTH_FINAL / dx, mode="nearest")
     return x, np.exp(lr - lr.max())
 
 
@@ -105,7 +105,7 @@ def main():
             if len(p0n) < 50 or len(p4) < 50:
                 ax.text(0.5, 0.5, "incomplete", transform=ax.transAxes, ha="center"); continue
             xn, pn = no_signal_curve(p0n, lo, hi)
-            xi, pi = injected_curve(p4, lo, hi, VISTA[i])
+            xi, pi = injected_curve(p4, lo, hi, DISPLAY[i])
             ax.plot(f(xn), pn, color="grey", lw=1.0, label="no signal")
             ax.plot(f(xi), pi, color="black", lw=1.0, label="signal injected")
             ax.axvline(f(inj), color="#E67E22", lw=1.0, label="injected value")

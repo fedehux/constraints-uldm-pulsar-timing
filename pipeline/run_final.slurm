@@ -1,15 +1,15 @@
 #!/bin/bash
 # =============================================================================
-# run_final.slurm  --  corridas finales (cotas y Bayes factor), carpeta ~/version_final
+# run_final.slurm  --  upper-limit runs on the cluster (folder ~/version_final)
 # =============================================================================
-# Un job = 1 nodo, 32 cores, ProcessPoolExecutor (sin MPI). Reparte los pares
-# (masa, pulsar) por stride entre N_JOBS. Idempotente: relanzar el MISMO sbatch
-# (mismos ACOPLE/MODO/JOB_ID/N_JOBS) saltea lo ya hecho.
+# One job = one node, 32 cores, ProcessPoolExecutor (no MPI). The (mass, pulsar)
+# pairs are dealt to the N_JOBS jobs by stride. Idempotent: resubmitting the
+# same sbatch (same COUPLING/JOB_ID/N_JOBS) skips what is done.
 #
-#   sbatch --export=ALL,ACOPLE=alpha,MODO=cotas,JOB_ID=0,N_JOBS=2 run_final.slurm
+#   sbatch --export=ALL,COUPLING=alpha,JOB_ID=0,N_JOBS=2 run_final.slurm
 #
-# Salida: ~/version_final/out_<ACOPLE>_<MODO>/hist/m_<masa>__<pulsar>__s0.npz
-# Las cadenas crudas van al disco local del nodo y se borran al terminar cada una.
+# Output: ~/version_final/out_<COUPLING>/hist/m_<mass>__<pulsar>__s0.npz
+# The raw chains go to the node's local disk and are deleted one by one.
 # =============================================================================
 #SBATCH --job-name=uldm_final
 #SBATCH --partition=batch
@@ -32,17 +32,16 @@ mkdir -p logs
 export OMP_NUM_THREADS=1 OPENBLAS_NUM_THREADS=1 MKL_NUM_THREADS=1 NUMEXPR_NUM_THREADS=1 VECLIB_MAXIMUM_THREADS=1
 export OMPI_MCA_mca_base_component_show_load_errors=0 PMIX_MCA_mca_base_component_show_load_errors=0
 
-: "${ACOPLE:?falta ACOPLE (alpha|beta|vec)}"
-: "${MODO:?falta MODO (cotas|bf)}"
+: "${COUPLING:?COUPLING is not set (alpha|beta|vec)}"
 export NANOGRAV_ROOT="${NANOGRAV_ROOT:-$HOME/vec2}"
-export OUT_ROOT="$HOME/version_final/out_${ACOPLE}_${MODO}"
+export OUT_ROOT="$HOME/version_final/out_${COUPLING}"
 export CHAIN_TMP="${TMPDIR:-/tmp}/uldm_final_${SLURM_JOB_ID:-local}"
-export CONGELAR_SECULARES="${CONGELAR_SECULARES:-PBDOT}"
+export FROZEN_PARAMS="${FROZEN_PARAMS:-PBDOT}"
 export N_ITER="${N_ITER:-200000}"
 export JOB_ID="${JOB_ID:-0}" N_JOBS="${N_JOBS:-1}"
 mkdir -p "$OUT_ROOT" "$CHAIN_TMP"
 
-echo "host=$(hostname)  cpus=$SLURM_CPUS_PER_TASK  ACOPLE=$ACOPLE MODO=$MODO job $JOB_ID/$N_JOBS  inicio $(date)"
+echo "host=$(hostname)  cpus=$SLURM_CPUS_PER_TASK  COUPLING=$COUPLING job $JOB_ID/$N_JOBS  start $(date)"
 "$PY" -u worker_final.py
 rm -rf "$CHAIN_TMP"
-echo "FIN $(date)"
+echo "END $(date)"

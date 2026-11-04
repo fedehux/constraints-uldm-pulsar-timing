@@ -1,6 +1,6 @@
 # 95% credible upper limit, quadratic universal coupling of a scalar field, M_i(Phi) = M_i (1 + beta Phi^2 / 2).
 # Constraints on ultralight dark matter couplings from orbital perturbations of binary pulsars
-# (Huxhagen & Lopez Nacir). Generated from quadratic/COTAS_beta.npz.
+# (Huxhagen & Lopez Nacir). Generated from quadratic/bounds_beta.npz.
 # mass [eV]    sqrt(beta) [GeV^-1]
 1.000000e-23    1.388061e-17
 1.059560e-23    1.514342e-17

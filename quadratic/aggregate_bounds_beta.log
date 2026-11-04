@@ -1,0 +1,6 @@
+[aggregate_bounds] beta version=final-2026-10-06  prior [-92.000, -60.000]  6400 bins  SMOOTHING=0.03 TAIL_FRAC=0.05 ANCHOR=0.7 TAIL=power_law EXPONENT=-1.0
+  masses 500; complete (50 pulsars): 500; incomplete: 0
+  smallest margin of the limit below the prior ceiling: 6.39 dex (m = 1.000e-18)
+  minimum ESS 9; median over masses of the per-mass minimum ESS 745
+  chains with >50% of their samples within 0.5 dex of the ceiling: 1 (pulsars insensitive at that mass; their ln Z_i is a plateau)
+  saved bounds_beta.npz

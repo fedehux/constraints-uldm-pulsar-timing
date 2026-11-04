@@ -7,8 +7,8 @@ Each chain is written back as
     <out_dir>/hist/m_<mass>__<pulsar>__s0.npz
 
 with the same keys, values and types as the file produced by
-``pipeline/worker_final.py``, so the production aggregator
-``pipeline/agregar_cotas.py`` runs on ``<out_dir>`` with ``OUT_ROOT=<out_dir>``.
+``pipeline/worker_final.py``, so the aggregator
+``pipeline/aggregate_bounds.py`` runs on ``<out_dir>`` with ``OUT_ROOT=<out_dir>``.
 
 Usage:
     python unpack_histograms.py <out_dir> <archive_part01.npz> [<archive_part02.npz> ...]

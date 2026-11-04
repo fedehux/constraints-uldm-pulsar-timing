@@ -15,9 +15,9 @@ other than DMX have an improper prior and are set to zero.
 Two masses per coupling (one away from every orbital resonance, one close to a
 resonance of PSR J1903+0327 or PSR J1909-3744) and two levels on the same noise
 and field realization: no signal, and a coupling 4 x the 95% upper limit of the
-paper at that mass (read from ``<coupling folder>/COTAS_<coupling>.npz``).  The
+paper at that mass (read from ``<coupling folder>/bounds_<coupling>.npz``).  The
 chains use the production likelihood with a prior uniform in log10 of the
-coupling over the range of ``pipeline/rangos_prior.py``.  Every random number is
+coupling over the range of ``pipeline/prior_ranges.py``.  Every random number is
 seeded by (coupling, mass, level, pulsar), so a rerun reproduces the runs of the
 paper for the same software versions.
 
@@ -66,24 +66,22 @@ TMP = os.path.join(tempfile.gettempdir(), "uldm_injection")
 if "NANOGRAV_ROOT" not in os.environ:
     raise SystemExit("set NANOGRAV_ROOT to the NANOGrav15yr_PulsarTiming_v2.1.0 folder")
 
-os.environ["PRIOR_ACOPLE"] = "loguniforme"            # prior uniform in log10 of the coupling
-os.environ.setdefault("CONGELAR_SECULARES", "PBDOT")  # Pbdot held at its published value
+os.environ["COUPLING_PRIOR"] = "log-uniform"          # prior uniform in log10 of the coupling
+os.environ.setdefault("FROZEN_PARAMS", "PBDOT")       # Pbdot held at its published value
 os.environ["OUT_ROOT"] = os.path.join(TMP, "out_pipeline")
 sys.path.insert(0, PIPELINE)
 
 import numpy as np                                    # noqa: E402
-import rangos_prior                                   # noqa: E402
 
-rangos_prior.exportar(COUPLING)
 P = importlib.import_module({"alpha": "pipeline_alpha", "beta": "pipeline_beta",
                              "vec": "pipeline_vec"}[COUPLING])
 EDGES = getattr(P, {"alpha": "ALPHA_EDGES", "beta": "BETA_EDGES", "vec": "G_EDGES"}[COUPLING])
 LO, HI = float(EDGES[0]), float(EDGES[-1])
 
 # 95% upper limits of the paper (code units, the same as the chain column 0)
-BOUNDS = {"alpha": os.path.join(ROOT, "linear", "COTAS_alpha.npz"),
-          "beta": os.path.join(ROOT, "quadratic", "COTAS_beta.npz"),
-          "vec": os.path.join(ROOT, "vector", "COTAS_vec.npz")}
+BOUNDS = {"alpha": os.path.join(ROOT, "linear", "bounds_alpha.npz"),
+          "beta": os.path.join(ROOT, "quadratic", "bounds_beta.npz"),
+          "vec": os.path.join(ROOT, "vector", "bounds_vec.npz")}
 # (tag, seed tag, mass of the bound grid); the resonant points lie a few widths
 # off the centre of the resonance, never on it
 MASSES = {"alpha": [("offres", 0, "9.8544087700e-23"),     # away from every resonance
@@ -92,7 +90,7 @@ MASSES = {"alpha": [("offres", 0, "9.8544087700e-23"),     # away from every res
                    ("res", 1, "2.4915046422e-22")],        # PSR J1903+0327, 2m = w_b
           "vec": [("offres", 0, "9.5477161142e-23"),
                   ("res", 1, "3.1231918474e-20")]}         # PSR J1909-3744, m = w_b
-MODEL_KEY = {"alpha": "la", "beta": "lb", "vec": "lg"}[COUPLING]   # coupling key in P.crear_modelo
+MODEL_KEY = {"alpha": "la", "beta": "lb", "vec": "lg"}[COUPLING]   # coupling key in P.make_model
 LEVELS = [("no_signal", 0, None), ("x4", 4, 4.0)]                  # (name, seed tag, factor)
 
 PSR_DIR = os.path.join(OUT, "pulsars", COUPLING)
@@ -200,7 +198,7 @@ def run_chain(model, out_dir, n_iter, seed):
 
 def theta95(m_str):
     with np.load(BOUNDS[COUPLING], allow_pickle=False) as z:
-        m, ul = z["masses_eV"], z["log10_ul_codigo"]
+        m, ul = z["masses_eV"], z["log10_ul_code"]
     i = int(np.argmin(np.abs(m / float(m_str) - 1)))
     if abs(m[i] / float(m_str) - 1) > 1e-8:
         raise RuntimeError(f"{m_str} is not a mass of the bound curve")
@@ -238,14 +236,13 @@ def task(args):
         raise RuntimeError(f"{name}: red-noise MAP missing")
     rf, gf = names[1], names[2]
     ctx = dict(ctx=(d["t_arr"], d["partials"], d["orb_pars"], m_dm),
-               uldm_resto={rf: 1.0, gf: 0.0}, name=name, pta=pta, rf=rf, gf=gf,
-               arn=arn, grn=grn, noise_norn={k: v for k, v in noise.items() if k not in (arn, grn)},
+               name=name, pta=pta, rf=rf, gf=gf,
+               arn=arn, grn=grn, noise_fixed={k: v for k, v in noise.items() if k not in (arn, grn)},
                rn_map=(noise[arn], noise[grn]), ecc=d["orb_pars"]["ecc"], n_toa=len(d["t_arr"]))
     ctx[MODEL_KEY] = names[0]
     if COUPLING == "vec":
         ctx.update(vt=names[3], vp=names[4], sin_i=d["orb_pars"]["sin_i"])
-        ctx["uldm_resto"].update({names[3]: 0.5 * np.pi, names[4]: 0.0})
-    model = P.crear_modelo(ctx)
+    model = P.make_model(ctx)
     seed = np.random.SeedSequence([104729, acn, it, inv, ipsr]).generate_state(1)[0]
     out_dir = os.path.join(TMP, "chains", COUPLING, f"{tag}_{level}_{name}")
     try:
@@ -257,15 +254,15 @@ def task(args):
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     tmp = dest + ".tmp.npz"
     np.savez_compressed(
-        tmp, m_eV=m_eV, m_str=m_str, name=name, semilla=int(seed), counts=counts.astype(np.int32),
-        ess=float(P.effective_sample_size(x)), n_muestras=int(x.size),
-        n_fuera=int(np.sum((x < LO) | (x > HI))), n_toa=len(d["t_arr"]),
-        ecc=float(d["orb_pars"]["ecc"]), n_iter=n_iter, acople=COUPLING, modo="iny",
-        prior="loguniforme", version=P.VERSION_PIPELINE, likelihood=P.LIKELIHOOD,
+        tmp, m_eV=m_eV, m_str=m_str, name=name, seed=int(seed), counts=counts.astype(np.int32),
+        ess=float(P.effective_sample_size(x)), n_samples=int(x.size),
+        n_outside=int(np.sum((x < LO) | (x > HI))), n_toa=len(d["t_arr"]),
+        ecc=float(d["orb_pars"]["ecc"]), n_iter=n_iter, coupling=COUPLING,
+        prior="log-uniform", version=P.VERSION_PIPELINE, likelihood=P.LIKELIHOOD,
         log10_min=LO, log10_max=HI, n_bins=len(EDGES) - 1, x_min=float(x.min()),
-        x_max=float(x.max()), frac_techo=float(np.mean(x > HI - 0.5)),
-        frac_piso=float(np.mean(x < LO + 1.0)),
-        nivel=level, x_inj=np.nan if x_inj is None else x_inj, rho_inj=rho, ups_inj=ups,
+        x_max=float(x.max()), frac_ceiling=float(np.mean(x > HI - 0.5)),
+        frac_floor=float(np.mean(x < LO + 1.0)),
+        level=level, x_inj=np.nan if x_inj is None else x_inj, rho_inj=rho, ups_inj=ups,
         cos_t_inj=cos_t, varphi_inj=vphi, snr2=snr2, rn_inj=np.array(ctx["rn_map"]),
         acc=float(np.mean(np.diff(x) != 0)), t_min=(time.time() - t0) / 60.0)
     os.replace(tmp, dest)

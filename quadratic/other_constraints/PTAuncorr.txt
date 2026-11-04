@@ -1,10 +1,10 @@
 # PTA (uncorrelated) upper limit on sqrt(beta), quadratic scalar coupling.
-# Derivado de Alphauncorr.csv (misma cota en el acoplamiento lineal alpha) con la
-# transformacion exacta que relaciona Alphabayes.csv <-> PTA.txt:
-#     m_beta = m_alpha / 2        (la senal cuadratica oscila a 2m)
+# Derived from Alphauncorr.csv (the same limit on the linear coupling alpha) with the
+# exact transformation that relates Alphabayes.csv <-> PTA.txt:
+#     m_beta = m_alpha / 2        (the quadratic signal oscillates at 2m)
 #     sqrt(beta) = 4.824906919445e5 * sqrt(alpha[GeV^-1] * m_alpha[eV])
-# Verificada sobre los 62 puntos de Alphabayes/PTA.txt: masas exactas, sqrt(beta)
-# con spread relativo 5e-16 en la constante.
+# Checked on the 62 points of Alphabayes/PTA.txt: exact masses, and a relative
+# spread of 5e-16 in the constant for sqrt(beta).
 # m [eV], sqrt(beta) [GeV^-1]
 1.0612351472294422e-24, 9.2148435277619899e-20
 1.0738873087742288e-24, 9.2174486834820091e-20
