@@ -63,14 +63,8 @@ sbatch --export=ALL,COUPLING=alpha,JOB_ID=0,N_JOBS=2 run_final.slurm
 `run_final.slurm` contains the module, environment and directory names of the
 cluster we used (`~/version_final`, data in `~/vec2`); adapt them to yours.
 
-### Cost
-
-Each chain has 200 000 iterations and took about 10 minutes on one core. The
-upper limits of the paper took about 4 400 CPU-hours for alpha
-(20 350 chains), 5 100 for beta (25 000 chains) and correspondingly more for
-the vector coupling (73 800 chains). The released histograms
-(`<coupling>/histograms/`) let you skip this step and start from the
-aggregation (`tools/reproduce_bounds.py`).
+The released histograms (`<coupling>/histograms/`) let you skip the chains and
+start from the aggregation (`tools/reproduce_bounds.py`).
 
 ## Aggregation output
 

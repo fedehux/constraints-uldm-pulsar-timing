@@ -17,7 +17,7 @@ enter at any of three levels:
 1. **Use the limits.** Plain-text tables (`mass [eV]`, limit) in each coupling
    folder, e.g. `linear/alpha_95UL.txt`.
 2. **Reproduce the curves and figures from the histograms** (minutes, a laptop).
-3. **Rerun the analysis from the data** (thousands of CPU-hours, a cluster).
+3. **Rerun the analysis from the data** (a cluster).
 
 ## Layout
 

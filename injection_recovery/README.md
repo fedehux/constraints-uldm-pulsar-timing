@@ -46,7 +46,7 @@ by (coupling, mass, level, pulsar), so the same software versions reproduce the
 chains of the paper.
 
 `INJ_OUT` changes the output folder and `INJ_N_ITER` the number of iterations
-per chain (200 000 in the paper; one chain takes 10–30 minutes on one core).
+per chain (200 000 in the paper).
 `python injection_recovery/run_injection.py test alpha J1909-3744 5000` runs a
 single short chain to check the setup.
 
